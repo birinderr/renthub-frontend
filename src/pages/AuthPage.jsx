@@ -1,11 +1,19 @@
-// src/pages/AuthPage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AuthPage() {
-  const [step, setStep] = useState(1); // 1 = form, 2 = otp
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/profile"); 
+    }
+  }, [user, navigate]);
+
+  const [step, setStep] = useState(1);
   const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -14,7 +22,6 @@ export default function AuthPage() {
     otp: "",
   });
 
-  const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleChange = (e) => {
