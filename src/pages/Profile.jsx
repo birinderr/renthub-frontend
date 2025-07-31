@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -14,6 +15,16 @@ export default function Profile() {
   const [givenReviews, setGivenReviews] = useState([]);
   const [receivedReviews, setReceivedReviews] = useState([]);
   const [showReviews, setShowReviews] = useState(false);
+
+  // Add state for modal/form
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestItem, setRequestItem] = useState({
+    name: '',
+    description: '',
+    pricePerDay: '',
+    category: '',
+    image: null,
+  });
 
   const fetchBookings = async () => {
     try {
@@ -75,6 +86,31 @@ export default function Profile() {
       fetchReceivedReviews();
     }
     setShowReviews(!showReviews);
+  };
+
+  // Handler for submitting the request
+  const handleRequestItem = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', requestItem.name);
+    formData.append('description', requestItem.description);
+    formData.append('pricePerDay', requestItem.pricePerDay);
+    formData.append('category', requestItem.category);
+    formData.append('image', requestItem.image);
+
+    try {
+      await axios.post('/api/items/request', formData, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      toast('Item request submitted for approval!');
+      setShowRequestModal(false);
+      setRequestItem({ name: '', description: '', pricePerDay: '', category: '', image: null });
+    } catch (err) {
+      toast(err.response?.data?.message || 'Failed to submit item request');
+    }
   };
 
   return (
@@ -236,6 +272,69 @@ export default function Profile() {
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {/* Show button only for non-admins */}
+        {!user?.isAdmin && (
+          <button
+            className="bg-blue-600 text-white py-2 px-4 rounded mb-4"
+            onClick={() => setShowRequestModal(true)}
+          >
+            List Your Item
+          </button>
+        )}
+
+        {/* Request Item Modal */}
+        {showRequestModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <form
+              className="bg-white p-6 rounded shadow space-y-4 w-full max-w-md"
+              onSubmit={handleRequestItem}
+            >
+              <h2 className="text-xl font-bold mb-2">Request to List an Item</h2>
+              <input
+                type="text"
+                placeholder="Name"
+                className="w-full border p-2 rounded"
+                value={requestItem.name}
+                onChange={e => setRequestItem({ ...requestItem, name: e.target.value })}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Description"
+                className="w-full border p-2 rounded"
+                value={requestItem.description}
+                onChange={e => setRequestItem({ ...requestItem, description: e.target.value })}
+              />
+              <input
+                type="number"
+                placeholder="Price Per Day"
+                className="w-full border p-2 rounded"
+                value={requestItem.pricePerDay}
+                onChange={e => setRequestItem({ ...requestItem, pricePerDay: e.target.value })}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Category"
+                className="w-full border p-2 rounded"
+                value={requestItem.category}
+                onChange={e => setRequestItem({ ...requestItem, category: e.target.value })}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                className="w-full"
+                onChange={e => setRequestItem({ ...requestItem, image: e.target.files[0] })}
+                required
+              />
+              <div className="flex gap-2">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Submit</button>
+                <button type="button" className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowRequestModal(false)}>Cancel</button>
+              </div>
+            </form>
           </div>
         )}
       </div>

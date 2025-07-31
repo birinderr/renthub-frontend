@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 export default function Admin() {
   const { user } = useAuth();
@@ -36,7 +37,6 @@ export default function Admin() {
         axios.get('/api/admin/bookings', { headers: { Authorization: `Bearer ${token}` } }),
         axios.get('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
-
       setUsers(usersRes.data);
       setItems(itemsRes.data);
       setBookings(bookingsRes.data);
@@ -44,6 +44,7 @@ export default function Admin() {
       setError('');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch admin data');
+      toast.error(err.response?.data?.message || 'Failed to fetch admin data');
     }
     setLoading(false);
   };
@@ -53,17 +54,19 @@ export default function Admin() {
     try {
       await axios.delete(`/api/admin/user/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setUsers(users.filter(u => u._id !== id));
+      toast.success('User deleted successfully');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete user');
+      toast.error(err.response?.data?.message || 'Failed to delete user');
     }
   };
 
   const handleApproveItem = async (id) => {
     try {
       await axios.put(`/api/admin/items/${id}/approve`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Item approved');
       fetchAll();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to approve item');
+      toast.error(err.response?.data?.message || 'Failed to approve item');
     }
   };
 
@@ -71,9 +74,10 @@ export default function Admin() {
     if (!window.confirm('Reject this item?')) return;
     try {
       await axios.put(`/api/admin/items/${id}/reject`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Item rejected');
       fetchAll();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to reject item');
+      toast.error(err.response?.data?.message || 'Failed to reject item');
     }
   };
 
@@ -95,9 +99,10 @@ export default function Admin() {
       });
       setShowCreateItem(false);
       setNewItem({ name: '', description: '', pricePerDay: '', category: '', image: null });
+      toast.success('Item created successfully');
       fetchAll();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create item');
+      toast.error(err.response?.data?.message || 'Failed to create item');
     }
   };
 
@@ -108,8 +113,9 @@ export default function Admin() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItems(items.filter(item => item._id !== id));
+      toast.success('Item deleted successfully');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete item');
+      toast.error(err.response?.data?.message || 'Failed to delete item');
     }
   };
 

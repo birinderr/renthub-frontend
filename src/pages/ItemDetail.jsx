@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 export default function ItemDetail() {
   const { id } = useParams();
@@ -21,8 +22,8 @@ export default function ItemDetail() {
     axios.post('/api/bookings', { itemId: id, ...dates }, {
       headers: { Authorization: `Bearer ${JSON.parse(sessionStorage.getItem('userInfo')).token}` }
     })
-    .then(() => alert('Booking requested!'))
-    .catch(e => alert(e.response.data.message));
+    .then(() => toast('Booking requested!'))
+    .catch(e => toast(e.response.data.message));
   };
 
   if (!item) return <p>Loading…</p>;

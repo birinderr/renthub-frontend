@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 
 export default function AuthPage() {
   const { user } = useAuth();
@@ -42,8 +43,9 @@ export default function AuthPage() {
 
       if (!res.ok) throw new Error("Registration failed");
       setStep(2);
+      toast.success("Registration successful! Please check your email for OTP.");
     } catch (err) {
-      alert("Registration error");
+      toast.error("Registration error");
     }
   };
 
@@ -63,8 +65,9 @@ export default function AuthPage() {
 
       login(data);
       navigate("/profile");
+      toast.success("OTP verified! Welcome.");
     } catch (err) {
-      alert("OTP verification failed");
+      toast.error("OTP verification failed");
     }
   };
 
@@ -84,8 +87,9 @@ export default function AuthPage() {
 
       login(data);
       navigate("/profile");
+      toast.success("Login successful!");
     } catch (err) {
-      alert("Login failed");
+      toast.error("Login failed");
     }
   };
 
