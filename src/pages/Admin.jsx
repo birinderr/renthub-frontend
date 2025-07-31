@@ -13,6 +13,14 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('stats');
   const [error, setError] = useState('');
+  const [showCreateItem, setShowCreateItem] = useState(false);
+  const [newItem, setNewItem] = useState({
+    name: '',
+    description: '',
+    pricePerDay: '',
+    category: '',
+    image: null,
+  });
 
   useEffect(() => {
     fetchAll();
@@ -66,6 +74,42 @@ export default function Admin() {
       fetchAll();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to reject item');
+    }
+  };
+
+  const handleCreateItem = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', newItem.name);
+    formData.append('description', newItem.description);
+    formData.append('pricePerDay', newItem.pricePerDay);
+    formData.append('category', newItem.category);
+    formData.append('image', newItem.image);
+
+    try {
+      await axios.post('/api/items', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setShowCreateItem(false);
+      setNewItem({ name: '', description: '', pricePerDay: '', category: '', image: null });
+      fetchAll();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to create item');
+    }
+  };
+
+  const handleDeleteItem = async (id) => {
+    if (!window.confirm('Delete this item?')) return;
+    try {
+      await axios.delete(`/api/items/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setItems(items.filter(item => item._id !== id));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete item');
     }
   };
 
@@ -176,44 +220,58 @@ export default function Admin() {
             )}
 
             {tab === 'items' && (
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white rounded shadow">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2">Name</th>
-                      <th className="px-4 py-2">Owner</th>
-                      <th className="px-4 py-2">Status</th>
-                      <th className="px-4 py-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map(item => (
-                      <tr key={item._id} className="border-t">
-                        <td className="px-4 py-2">{item.name}</td>
-                        <td className="px-4 py-2">{item.owner?.name} ({item.owner?.email})</td>
-                        <td className="px-4 py-2">{item.status}</td>
-                        <td className="px-4 py-2">
-                          {item.status === 'pending' && (
-                            <>
-                              <button
-                                className="text-green-600 hover:underline mr-2"
-                                onClick={() => handleApproveItem(item._id)}
-                              >
-                                Approve
-                              </button>
-                              <button
-                                className="text-red-600 hover:underline"
-                                onClick={() => handleRejectItem(item._id)}
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                        </td>
+              <div>
+                <button
+                  className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
+                  onClick={() => setShowCreateItem(true)}
+                >
+                  + Create Item
+                </button>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white rounded shadow">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-2">Name</th>
+                        <th className="px-4 py-2">Owner</th>
+                        <th className="px-4 py-2">Status</th>
+                        <th className="px-4 py-2">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {items.map(item => (
+                        <tr key={item._id} className="border-t">
+                          <td className="px-4 py-2">{item.name}</td>
+                          <td className="px-4 py-2">{item.owner?.name} ({item.owner?.email})</td>
+                          <td className="px-4 py-2">{item.status}</td>
+                          <td className="px-4 py-2">
+                            {item.status === 'pending' && (
+                              <>
+                                <button
+                                  className="text-green-600 hover:underline mr-2"
+                                  onClick={() => handleApproveItem(item._id)}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  className="text-red-600 hover:underline mr-2"
+                                  onClick={() => handleRejectItem(item._id)}
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            <button
+                              className="text-red-700 hover:underline"
+                              onClick={() => handleDeleteItem(item._id)}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -246,6 +304,58 @@ export default function Admin() {
               </div>
             )}
           </>
+        )}
+
+        {showCreateItem && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <form
+              className="bg-white p-6 rounded shadow space-y-4 w-full max-w-md"
+              onSubmit={handleCreateItem}
+            >
+              <h2 className="text-xl font-bold mb-2">Create New Item</h2>
+              <input
+                type="text"
+                placeholder="Name"
+                className="w-full border p-2 rounded"
+                value={newItem.name}
+                onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Description"
+                className="w-full border p-2 rounded"
+                value={newItem.description}
+                onChange={e => setNewItem({ ...newItem, description: e.target.value })}
+              />
+              <input
+                type="number"
+                placeholder="Price Per Day"
+                className="w-full border p-2 rounded"
+                value={newItem.pricePerDay}
+                onChange={e => setNewItem({ ...newItem, pricePerDay: e.target.value })}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Category"
+                className="w-full border p-2 rounded"
+                value={newItem.category}
+                onChange={e => setNewItem({ ...newItem, category: e.target.value })}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                className="w-full"
+                onChange={e => setNewItem({ ...newItem, image: e.target.files[0] })}
+                required
+              />
+              <div className="flex gap-2">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Create</button>
+                <button type="button" className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowCreateItem(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
         )}
       </div>
     </div>
