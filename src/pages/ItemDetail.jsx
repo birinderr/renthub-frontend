@@ -41,7 +41,7 @@ export default function ItemDetail() {
           onChange={e => setDates(d => ({ ...d, endDate: e.target.value }))}
           className="border p-2 rounded" />
         <button onClick={handleBooking}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer">
           Book Now
         </button>
       </div>

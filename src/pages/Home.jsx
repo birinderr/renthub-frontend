@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -10,6 +10,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
+  const itemsSectionRef = useRef(null);
 
   useEffect(() => {
     setLoading(true);
@@ -48,10 +49,20 @@ export default function Home() {
               Rent anything, anytime, anywhere - Your marketplace for everything!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-blue-50 transition-all transform hover:scale-105 shadow-lg">
+              <button
+                className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-transparent hover:border-white hover:border-2 hover:text-white transition-all transform hover:scale-105 shadow-lg cursor-pointer"
+                onClick={() => {
+                  if (itemsSectionRef.current) {
+                    itemsSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 Start Renting
               </button>
-              <button className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-all">
+              <button
+                className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-all transform hover:scale-105 shadow-lg cursor-pointer"
+                onClick={() => navigate('/profile')}
+              >
                 List Your Items
               </button>
             </div>
@@ -65,7 +76,7 @@ export default function Home() {
       </div>
 
       {/* Search and Filter Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div ref={itemsSectionRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-12">
           <div className="flex flex-col lg:flex-row gap-6 items-center">
             <div className="flex-1 w-full">
@@ -87,7 +98,7 @@ export default function Home() {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                  className={`px-6 py-3 rounded-xl font-medium cursor-pointer transition-all ${
                     selectedCategory === category
                       ? 'bg-blue-600 text-white shadow-lg'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -154,7 +165,7 @@ export default function Home() {
                         ₹{item.pricePerDay}
                         <span className="text-sm text-gray-500 font-normal">/day</span>
                       </div>
-                      <button className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors font-medium">
+                      <button className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors font-medium cursor-pointer">
                         Rent Now
                       </button>
                     </div>

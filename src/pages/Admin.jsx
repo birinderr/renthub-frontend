@@ -212,7 +212,7 @@ export default function Admin() {
                         <td className="px-4 py-2">{user.isAdmin ? 'Yes' : 'No'}</td>
                         <td className="px-4 py-2">
                           <button
-                            className="text-red-600 hover:underline"
+                            className="text-red-600 hover:underline cursor-pointer"
                             onClick={() => handleDeleteUser(user._id)}
                           >
                             Delete
@@ -228,7 +228,7 @@ export default function Admin() {
             {tab === 'items' && (
               <div>
                 <button
-                  className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
+                  className="mb-4 bg-blue-600 text-white px-4 py-2 rounded cursor-pointer"
                   onClick={() => setShowCreateItem(true)}
                 >
                   + Create Item
@@ -253,13 +253,13 @@ export default function Admin() {
                             {item.status === 'pending' && (
                               <>
                                 <button
-                                  className="text-green-600 hover:underline mr-2"
+                                  className="text-green-600 hover:underline mr-2 cursor-pointer"
                                   onClick={() => handleApproveItem(item._id)}
                                 >
                                   Approve
                                 </button>
                                 <button
-                                  className="text-red-600 hover:underline mr-2"
+                                  className="text-red-600 hover:underline mr-2 cursor-pointer"
                                   onClick={() => handleRejectItem(item._id)}
                                 >
                                   Reject
@@ -267,7 +267,7 @@ export default function Admin() {
                               </>
                             )}
                             <button
-                              className="text-red-700 hover:underline"
+                              className="text-red-700 hover:underline cursor-pointer"
                               onClick={() => handleDeleteItem(item._id)}
                             >
                               Delete
@@ -357,8 +357,8 @@ export default function Admin() {
                 required
               />
               <div className="flex gap-2">
-                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Create</button>
-                <button type="button" className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowCreateItem(false)}>Cancel</button>
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">Create</button>
+                <button type="button" className="bg-gray-300 px-4 py-2 rounded cursor-pointer" onClick={() => setShowCreateItem(false)}>Cancel</button>
               </div>
             </form>
           </div>
