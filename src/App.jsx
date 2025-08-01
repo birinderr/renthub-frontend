@@ -6,21 +6,32 @@ import Profile from './pages/Profile';
 import ItemDetail from './pages/ItemDetail';
 import Admin from './pages/Admin';
 import AdminRoute from './components/AdminRoute';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
     <Router>
       <Navbar />
-        <Routes>
+      <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/items/:id" element={<ItemDetail />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/admin" element={
-          <AdminRoute>
-            <Admin />
-          </AdminRoute>
-        } />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
       </Routes>
     </Router>
   );
