@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
 
   const [bookings, setBookings] = useState([]);
 
@@ -26,6 +26,28 @@ export default function Profile() {
   });
 
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setEditUser({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: user.address || '',
+      });
+    }
+  }, [user]);
+
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editUser, setEditUser] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    address: user?.address || '',
+  });
+
+  const [showEditItemModal, setShowEditItemModal] = useState(false);
+  const [editItem, setEditItem] = useState(null);
 
   const fetchBookings = async () => {
     try {
@@ -98,6 +120,52 @@ export default function Profile() {
     }
   };
 
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await axios.put('/api/users/profile', editUser, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setShowEditUserModal(false);
+      setEditUser(res.data);
+      login(res.data);
+      toast.success('Profile updated!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditItem = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('name', editItem.name);
+      formData.append('description', editItem.description);
+      formData.append('pricePerDay', editItem.pricePerDay);
+      formData.append('category', editItem.category);
+      if (editItem.image instanceof File) {
+        formData.append('image', editItem.image);
+      }
+      await axios.put(`/api/items/${editItem._id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      toast.success('Item updated!');
+      setShowEditItemModal(false);
+      fetchItems();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update item');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const StatCard = ({ title, value, icon, color = 'blue' }) => (
     <div className={`bg-white rounded-xl shadow-md p-6 border-l-4 border-${color}-500 hover:shadow-lg transition-shadow`}>
       <div className="flex items-center justify-between">
@@ -132,6 +200,7 @@ export default function Profile() {
       fetchReceivedReviews();
     }
   }, [user?.token]);
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-8">
@@ -189,22 +258,23 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-800">Personal Information</h3>
+                        <button className="text-blue-600 ml-2" onClick={() => setShowEditUserModal(true)}>Edit</button>
                     <div className="space-y-3">
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <span className="text-gray-600">Full Name:</span>
-                        <span className="font-medium">{user?.name || 'N/A'}</span>
+                        <span className="font-medium">{editUser?.name || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <span className="text-gray-600">Email:</span>
-                        <span className="font-medium">{user?.email || 'NA'}</span>
+                        <span className="font-medium">{editUser?.email || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <span className="text-gray-600">Phone:</span>
-                        <span className="font-medium">{user?.phone || 'N/A'}</span>
+                        <span className="font-medium">{editUser?.phone || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <span className="text-gray-600">Address:</span>
-                        <span className="font-medium">{user?.address || 'N/A'}</span>
+                        <span className="font-medium">{editUser?.address || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -359,6 +429,7 @@ export default function Profile() {
                               <span className="text-xs text-gray-500">({item.reviewCount} reviews)</span>
                             </div>
                           </div>
+                          <button className="text-blue-600 ml-2" onClick={() => { setEditItem(item); setShowEditItemModal(true); }}>Edit</button>
                         </div>
                       </div>
                     </div>
@@ -556,6 +627,45 @@ export default function Profile() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <form className="p-6 space-y-4" onSubmit={handleEditUser}>
+              <h2 className="text-xl font-bold mb-2">Edit Profile</h2>
+              <input type="text" value={editUser.name} onChange={e => setEditUser({ ...editUser, name: e.target.value })} className="w-full border p-2 rounded" placeholder="Name" required />
+              <input type="email" value={editUser.email} onChange={e => setEditUser({ ...editUser, email: e.target.value })} className="w-full border p-2 rounded" placeholder="Email" required />
+              <input type="text" value={editUser.phone} onChange={e => setEditUser({ ...editUser, phone: e.target.value })} className="w-full border p-2 rounded" placeholder="Phone" />
+              <input type="text" value={editUser.address} onChange={e => setEditUser({ ...editUser, address: e.target.value })} className="w-full border p-2 rounded" placeholder="Address" />
+              <div className="flex gap-2">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+                <button type="button" className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowEditUserModal(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Item Modal */}
+      {showEditItemModal && editItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <form className="p-6 space-y-4" onSubmit={handleEditItem}>
+              <h2 className="text-xl font-bold mb-2">Edit Item</h2>
+              <input type="text" value={editItem.name} onChange={e => setEditItem({ ...editItem, name: e.target.value })} className="w-full border p-2 rounded" placeholder="Name" required />
+              <textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="w-full border p-2 rounded" placeholder="Description" />
+              <input type="number" value={editItem.pricePerDay} onChange={e => setEditItem({ ...editItem, pricePerDay: e.target.value })} className="w-full border p-2 rounded" placeholder="Price Per Day" required />
+              <input type="text" value={editItem.category} onChange={e => setEditItem({ ...editItem, category: e.target.value })} className="w-full border p-2 rounded" placeholder="Category" required />
+              <input type="file" accept="image/*" className="w-full" onChange={e => setEditItem({ ...editItem, image: e.target.files[0] })} />
+              <div className="flex gap-2">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+                <button type="button" className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowEditItemModal(false)}>Cancel</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
