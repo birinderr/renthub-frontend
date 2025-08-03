@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import API from '../api/api';
 
 export default function Admin() {
   const { user } = useAuth();
@@ -32,10 +32,10 @@ export default function Admin() {
     setLoading(true);
     try {
       const [usersRes, itemsRes, bookingsRes, statsRes] = await Promise.all([
-        axios.get('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/api/admin/items', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/api/admin/bookings', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } }),
+        API.get('/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
+        API.get('/admin/items', { headers: { Authorization: `Bearer ${token}` } }),
+        API.get('/admin/bookings', { headers: { Authorization: `Bearer ${token}` } }),
+        API.get('/admin/stats', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setUsers(usersRes.data);
       setItems(itemsRes.data);
@@ -52,7 +52,7 @@ export default function Admin() {
   const handleDeleteUser = async (id) => {
     if (!window.confirm('Delete this user?')) return;
     try {
-      await axios.delete(`/api/admin/user/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await API.delete(`/admin/user/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setUsers(users.filter(u => u._id !== id));
       toast.success('User deleted successfully');
     } catch (err) {
@@ -62,7 +62,7 @@ export default function Admin() {
 
   const handleApproveItem = async (id) => {
     try {
-      await axios.put(`/api/admin/items/${id}/approve`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await API.put(`/admin/items/${id}/approve`, {}, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Item approved');
       fetchAll();
     } catch (err) {
@@ -73,7 +73,7 @@ export default function Admin() {
   const handleRejectItem = async (id) => {
     if (!window.confirm('Reject this item?')) return;
     try {
-      await axios.put(`/api/admin/items/${id}/reject`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await API.put(`/admin/items/${id}/reject`, {}, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Item rejected');
       fetchAll();
     } catch (err) {
@@ -91,7 +91,7 @@ export default function Admin() {
     formData.append('image', newItem.image);
 
     try {
-      await axios.post('/api/items', formData, {
+      await API.post('/items', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -109,7 +109,7 @@ export default function Admin() {
   const handleDeleteItem = async (id) => {
     if (!window.confirm('Delete this item?')) return;
     try {
-      await axios.delete(`/api/items/${id}`, {
+      await API.delete(`/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItems(items.filter(item => item._id !== id));

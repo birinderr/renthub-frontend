@@ -1,7 +1,7 @@
 // src/pages/Home.jsx
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import API from "../api/api"
 
 export default function Home() {
   const [items, setItems] = useState([]);
@@ -14,7 +14,7 @@ export default function Home() {
 
   useEffect(() => {
     setLoading(true);
-    axios.get('/api/items')
+    API.get('/items')
       .then(res => {
         setItems(res.data);
         setLoading(false);

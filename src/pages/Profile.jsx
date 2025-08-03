@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import API from "../api/api";
 import { toast } from 'react-hot-toast';
 
 export default function Profile() {
@@ -51,7 +51,7 @@ export default function Profile() {
 
   const fetchBookings = async () => {
     try {
-      const res = await axios.get('/api/bookings/my', {
+      const res = await API.get('/bookings/my', {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       setBookings(res.data);
@@ -62,7 +62,7 @@ export default function Profile() {
 
   const fetchItems = async () => {
     try {
-      const res = await axios.get('/api/items/myitems', {
+      const res = await API.get('/items/myitems', {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       setListedItems(res.data);
@@ -73,7 +73,7 @@ export default function Profile() {
 
   const fetchGivenReviews = async () => {
     try {
-      const res = await axios.get('/api/reviews/my/given', {
+      const res = await API.get('/reviews/my/given', {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       setGivenReviews(res.data);
@@ -84,7 +84,7 @@ export default function Profile() {
 
   const fetchReceivedReviews = async () => {
     try {
-      const res = await axios.get('/api/reviews/my/received', {
+      const res = await API.get('/reviews/my/received', {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       setReceivedReviews(res.data);
@@ -104,7 +104,7 @@ export default function Profile() {
     formData.append('image', requestItem.image);
 
     try {
-      await axios.post('/api/items/request', formData, {
+      await API.post('/items/request', formData, {
         headers: {
           Authorization: `Bearer ${user.token}`,
           'Content-Type': 'multipart/form-data',
@@ -124,7 +124,7 @@ export default function Profile() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.put('/api/users/profile', editUser, {
+      const res = await API.put('/users/profile', editUser, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       setShowEditUserModal(false);
@@ -150,7 +150,7 @@ export default function Profile() {
       if (editItem.image instanceof File) {
         formData.append('image', editItem.image);
       }
-      await axios.put(`/api/items/${editItem._id}`, formData, {
+      await API.put(`/items/${editItem._id}`, formData, {
         headers: {
           Authorization: `Bearer ${user.token}`,
           'Content-Type': 'multipart/form-data',

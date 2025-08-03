@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
+import API from "../api/api"
 
 export default function AuthPage() {
   const { user, login } = useAuth();
@@ -17,11 +18,9 @@ export default function AuthPage() {
     otp: "",
   });
 
-  useEffect(() => {
-    if (user) {
-      navigate("/profile");
-    }
-  }, [user, navigate]);
+  if (user) {
+    return <Navigate to="/profile" replace />;
+  }
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -40,16 +39,12 @@ export default function AuthPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
+      const res = await API.post("/users/register", {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
       });
-      if (!res.ok) throw new Error("Registration failed");
+      // if (!res.ok) throw new Error("Registration failed");
       setStep(2);
       toast.success("Registration successful! Please check your email for OTP.");
     } catch (err) {
@@ -66,17 +61,12 @@ export default function AuthPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/users/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          otp: formData.otp,
-        }),
+      const res = await API.post("/users/verify", {
+      email: formData.email,
+      otp: formData.otp,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Verification failed");
-      login(data);
+      const { token, user } = res.data;
+      login({ token, ...user });
       navigate("/profile");
       toast.success("OTP verified! Welcome.");
     } catch (err) {
@@ -93,17 +83,12 @@ export default function AuthPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+      const res = await API.post("/users/login", {
+      email: formData.email,
+      password: formData.password,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
-      login(data);
+      const { token, user } = res.data;
+      login({ token, ...user });
       navigate("/profile");
       toast.success("Login successful!");
     } catch (err) {

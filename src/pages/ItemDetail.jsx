@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import API from "../api/api"
 import { toast } from 'react-hot-toast';
 
 export default function ItemDetail() {
@@ -10,16 +10,16 @@ export default function ItemDetail() {
   const [dates, setDates] = useState({ startDate: '', endDate: '' });
 
   useEffect(() => {
-    axios.get(`/api/items/${id}`)
+    API.get(`/items/${id}`)
       .then(r => setItem(r.data))
       .catch(console.error);
-    axios.get(`/api/reviews/${id}`)
+    API.get(`/reviews/${id}`)
       .then(r => setReviews(r.data))
       .catch(console.error);
   }, [id]);
 
   const handleBooking = () => {
-    axios.post('/api/bookings', { itemId: id, ...dates }, {
+    API.post('/bookings', { itemId: id, ...dates }, {
       headers: { Authorization: `Bearer ${JSON.parse(sessionStorage.getItem('userInfo')).token}` }
     })
     .then(() => toast('Booking requested!'))
