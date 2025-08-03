@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import API from "../api/api"
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ItemDetail() {
   const { id } = useParams();
   const [item, setItem] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [dates, setDates] = useState({ startDate: '', endDate: '' });
+  const { user } = useAuth();
 
   useEffect(() => {
     API.get(`/items/${id}`)
@@ -19,11 +21,17 @@ export default function ItemDetail() {
   }, [id]);
 
   const handleBooking = () => {
-    API.post('/bookings', { itemId: id, ...dates }, {
-      headers: { Authorization: `Bearer ${JSON.parse(sessionStorage.getItem('userInfo')).token}` }
-    })
-    .then(() => toast('Booking requested!'))
-    .catch(e => toast(e.response.data.message));
+    if (!user?.token) {
+      return toast.error('You must be logged in to book');
+    }
+
+    try {
+      API.post('/bookings', { itemId: id, ...dates });
+      toast('Booking requested!');
+    }
+    catch (e) {
+      toast.error(e.response?.data?.message || 'Booking failed');
+    }
   };
 
   if (!item) return <p>Loading…</p>;
