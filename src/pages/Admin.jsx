@@ -15,6 +15,8 @@ export default function Admin() {
   const [tab, setTab] = useState('stats');
   const [error, setError] = useState('');
   const [showCreateItem, setShowCreateItem] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editUser, setEditUser] = useState({ name: '', email: '', isAdmin: false });
   const [newItem, setNewItem] = useState({
     name: '',
     description: '',
@@ -103,6 +105,32 @@ export default function Admin() {
       fetchAll();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create item');
+    }
+  };
+
+  const openEditModal = (user) => {
+    setEditingUserId(user._id);
+    setEditUser({ name: user.name, email: user.email, isAdmin: user.isAdmin });
+  };
+
+  const closeEditModal = () => {
+    setEditingUserId(null);
+  };
+
+  const handleUpdateUser = async (id, updatedFields) => {
+    try {
+      await API.put(
+        `/admin/user/${id}`,
+        updatedFields,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUsers(users.map(u =>
+        u._id === id ? { ...u, ...updatedFields } : u
+      ));
+      toast.success('User updated successfully');
+      closeEditModal();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update user');
     }
   };
 
@@ -210,9 +238,15 @@ export default function Admin() {
                         <td className="px-4 py-2">{user.name}</td>
                         <td className="px-4 py-2">{user.email}</td>
                         <td className="px-4 py-2">{user.isAdmin ? 'Yes' : 'No'}</td>
-                        <td className="px-4 py-2">
+                        <td className="px-4 py-2 space-x-4">
                           <button
-                            className="text-red-600 hover:underline cursor-pointer"
+                            className="text-blue-600 hover:underline cursor-pointer border-2 border-blue-600 px-2 py-1 rounded-3xl"
+                            onClick={() => openEditModal(user)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="text-red-600 hover:underline cursor-pointer border-2 border-red-600 px-2 py-1 rounded-3xl"
                             onClick={() => handleDeleteUser(user._id)}
                           >
                             Delete
@@ -253,13 +287,13 @@ export default function Admin() {
                             {item.status === 'pending' && (
                               <>
                                 <button
-                                  className="text-green-600 hover:underline mr-2 cursor-pointer"
+                                  className="text-green-600 hover:underline mr-2 cursor-pointer border-2 border-green-600 px-2 py-1 rounded-3xl"
                                   onClick={() => handleApproveItem(item._id)}
                                 >
                                   Approve
                                 </button>
                                 <button
-                                  className="text-red-600 hover:underline mr-2 cursor-pointer"
+                                  className="text-red-600 hover:underline mr-2 cursor-pointer border-2 border-red-600 px-2 py-1 rounded-3xl"
                                   onClick={() => handleRejectItem(item._id)}
                                 >
                                   Reject
@@ -267,7 +301,7 @@ export default function Admin() {
                               </>
                             )}
                             <button
-                              className="text-red-700 hover:underline cursor-pointer"
+                              className="text-red-700 hover:underline cursor-pointer border-2 border-red-600 px-2 py-1 rounded-3xl"
                               onClick={() => handleDeleteItem(item._id)}
                             >
                               Delete
@@ -313,9 +347,9 @@ export default function Admin() {
         )}
 
         {showCreateItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-transparent bg-opacity-30 flex items-center justify-center z-50">
             <form
-              className="bg-white p-6 rounded shadow space-y-4 w-full max-w-md"
+              className="bg-white p-6 rounded-3xl shadow space-y-4 w-full max-w-md cursor-pointer"
               onSubmit={handleCreateItem}
             >
               <h2 className="text-xl font-bold mb-2">Create New Item</h2>
@@ -359,6 +393,55 @@ export default function Admin() {
               <div className="flex gap-2">
                 <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">Create</button>
                 <button type="button" className="bg-gray-300 px-4 py-2 rounded cursor-pointer" onClick={() => setShowCreateItem(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        )} 
+        {editingUserId && (
+          <div className="fixed inset-0 bg-transparent bg-opacity-30 flex items-center justify-center z-50">
+            <form
+              className="bg-white p-6 rounded shadow space-y-4 w-full max-w-md"
+              onSubmit={e => {
+                e.preventDefault();
+                handleUpdateUser(editingUserId, editUser);
+              }}
+            >
+              <h2 className="text-xl font-bold">Edit User</h2>
+              <input
+                type="text"
+                placeholder="Name"
+                className="w-full border p-2 rounded"
+                value={editUser.name}
+                onChange={e => setEditUser({ ...editUser, name: e.target.value })}
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                className="w-full border p-2 rounded"
+                value={editUser.email}
+                onChange={e => setEditUser({ ...editUser, email: e.target.value })}
+                required
+              />
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={editUser.isAdmin}
+                  onChange={e => setEditUser({ ...editUser, isAdmin: e.target.checked })}
+                />
+                <span>Admin?</span>
+              </label>
+              <div className="flex gap-2">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="bg-gray-300 px-4 py-2 rounded cursor-pointer"
+                  onClick={closeEditModal}
+                >
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
