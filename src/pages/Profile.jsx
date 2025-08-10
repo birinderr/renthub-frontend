@@ -7,6 +7,7 @@ export default function Profile() {
   const { user, login } = useAuth();
 
   const [bookings, setBookings] = useState([]);
+  const [ownerBookings, setOwnerBookings] = useState([]);
 
   const [listedItems, setListedItems] = useState([]);
 
@@ -27,6 +28,15 @@ export default function Profile() {
 
   const [loading, setLoading] = useState(false);
 
+  
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editUser, setEditUser] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    address: user?.address || '',
+  });
+  
   useEffect(() => {
     if (user) {
       setEditUser({
@@ -37,14 +47,6 @@ export default function Profile() {
       });
     }
   }, [user]);
-
-  const [showEditUserModal, setShowEditUserModal] = useState(false);
-  const [editUser, setEditUser] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
-  });
 
   const [showEditItemModal, setShowEditItemModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
@@ -68,6 +70,18 @@ export default function Profile() {
       setListedItems(res.data);
     } catch (err) {
       console.error('Failed to fetch items:', err);
+    }
+  };
+
+  // fetch bookings for items owned by current user
+  const fetchOwnerBookings = async () => {
+    try {
+      const res = await API.get('/bookings/owner', {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      setOwnerBookings(res.data);
+    } catch (err) {
+      console.error('Failed to fetch owner bookings', err);
     }
   };
 
@@ -192,12 +206,33 @@ export default function Profile() {
     </button>
   );
 
+  // Approve / Reject handler
+  const handleUpdateBookingStatus = async (bookingId, status) => {
+    try {
+      setLoading(true);
+      await API.put(`/bookings/${bookingId}/status`, { status }, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      toast.success(`Booking ${status}`);
+      // refresh relevant lists: owner's incoming requests, renter view, items
+      await fetchOwnerBookings();
+      await fetchBookings();
+      await fetchItems();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to update booking');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user?.token) {
       fetchBookings();
       fetchItems();
       fetchGivenReviews();
       fetchReceivedReviews();
+      fetchOwnerBookings();
     }
   }, [user?.token]);
 
@@ -235,6 +270,13 @@ export default function Profile() {
               label="My Items" 
               icon="📦" 
               isActive={activeTab === 'items'} 
+              onClick={setActiveTab} 
+            />
+            <TabButton 
+              id="requests" 
+              label="Incoming Requests" 
+              icon="📥" 
+              isActive={activeTab === 'requests'} 
               onClick={setActiveTab} 
             />
             <TabButton 
@@ -342,7 +384,7 @@ export default function Profile() {
                           <div className="flex justify-between items-start">
                             <h3 className="font-bold text-lg text-gray-900">{booking.item?.name}</h3>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              booking.status === 'approved' ? 'bg-green-100 text-green-800' :
                               booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
@@ -438,6 +480,65 @@ export default function Profile() {
               )}
             </div>
           )}
+
+          {/* Incoming requests (owner) */}
+            {activeTab === 'requests' && (
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Incoming Booking Requests</h2>
+                {ownerBookings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">📨</div>
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No incoming requests</h3>
+                    <p className="text-gray-500">When people request your items, you'll see them here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {ownerBookings.map((b) => (
+                      <div key={b._id} className="border rounded-xl p-4 flex gap-4 items-start">
+                        {b.item?.image && <img src={b.item.image} alt={b.item.name} className="w-20 h-20 object-cover rounded" />}
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-bold">{b.item?.name}</h3>
+                              <p className="text-sm text-gray-600">Requested by: {b.renter?.name} ({b.renter?.email})</p>
+                              <p className="text-sm text-gray-600">From {new Date(b.startDate).toLocaleDateString()} to {new Date(b.endDate).toLocaleDateString()}</p>
+                              <p className="text-sm text-gray-600">Price/day: {b.pricePerDay} • Total: {b.totalPrice}</p>
+                            </div>
+                            <div>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                b.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                b.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>{b.status}</span>
+                            </div>
+                          </div>
+
+                          {b.status === 'pending' && (
+                            <div className="mt-3 flex gap-2">
+                              <button
+                                className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-60"
+                                onClick={() => handleUpdateBookingStatus(b._id, 'approved')}
+                                disabled={loading}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                className="bg-red-500 text-white px-4 py-2 rounded disabled:opacity-60"
+                                onClick={() => handleUpdateBookingStatus(b._id, 'rejected')}
+                                disabled={loading}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Reviews Tab */}
           {activeTab === 'reviews' && (
